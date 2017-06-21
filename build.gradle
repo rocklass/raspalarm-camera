@@ -1,0 +1,46 @@
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import org.apache.tools.ant.filters.ReplaceTokens
+
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.bmuschko:gradle-docker-plugin:3.0.7"
+    }
+}
+
+group = appGroup
+
+apply plugin: "com.bmuschko.docker-remote-api"
+
+loadConfiguration()
+
+docker {
+    url = project.dockerUrl.replaceAll('@serverIpAddress@', project.serverIpAddress)
+}
+
+def loadConfiguration() {
+    def environment = hasProperty("env") ? env : "dev"
+
+    Properties properties = new Properties()
+    properties.load(project.file("src/main/profile/$environment/env.properties").newDataInputStream())
+    properties.each { property ->
+        project.ext.set(property.key, property.value)
+    }
+}
+
+task dockerBuildImage(type: DockerBuildImage, dependsOn: ":processDockerRessources") {
+    inputDir = project.file("build/docker")
+    tag = "$appGroup/$appName"
+}
+
+task processDockerRessources(type: Copy) {
+    from ("src/main/docker") {
+        filter(ReplaceTokens, tokens: [
+                dockerContainerFrom: project.dockerContainerFrom
+        ])
+    }
+    into "build/docker"
+}

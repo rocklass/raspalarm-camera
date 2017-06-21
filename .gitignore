@@ -1,0 +1,11 @@
+#IDE files
+.idea
+
+#Build tool files
+.gradle
+
+#Generated
+build
+
+#Prod files (personal)
+src/main/profile/prod
